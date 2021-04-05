@@ -1,11 +1,30 @@
 const express = require('express');
 const app = express();
 app.use(express.json());
-const { models: { User }} = require('./db');
+const { models: { User, Note }} = require('./db');
 const path = require('path');
 const jwt = require('jsonwebtoken')
 
-app.get('/', (req, res)=> res.sendFile(path.join(__dirname, 'index.html')));
+
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+
+app.get('/api/users/:id/notes', async (req, res, next) => {
+  try {
+    const currentUser = await User.byToken(req.headers.authorization)
+    if (currentUser.data.id === req.params.id) {
+      res.send(await Note.findAll({
+        where: {
+          userId: req.params.id
+        }
+      }))
+    } else {
+      res.send('err')
+    }
+
+  } catch (ex) {
+    next(ex)
+  }
+})
 
 app.post('/api/auth', async(req, res, next)=> {
   try {
